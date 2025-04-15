@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIP Code Explorer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Left sidebar with CIP codes -->
+        <div class="sidebar">
+            <div class="sidebar-header">CIP Categories</div>
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search categories...">
+            </div>
+            <div class="category-list-container">
+                <ul id="cip-list" class="category-list"></ul>
+            </div>
+        </div>
+
+        <!-- Right content area -->
+        <div class="content">
+            <!-- Top toolbar with buttons -->
+            <div class="toolbar">
+                <button id="edu-button" class="toolbar-button" title="Left-click to open link, right-click to edit">.edu</button>
+                <button id="insta-button" class="toolbar-button" title="Left-click to open link, right-click to edit">@Insta</button>
+                <div class="data-status" id="data-status">No data loaded</div>
+            </div>
+
+            <!-- Schema config modal -->
+            <div id="schema-modal" class="modal">
+                <div class="modal-content">
+                    <span class="close-button">&times;</span>
+                    <h2>Configure Data Schema</h2>
+                    <p>Specify which fields to use from your JSON data:</p>
+                    
+                    <div class="schema-section">
+                        <h3>Programs</h3>
+                        <div class="form-group">
+                            <label for="program-name">Name Field:</label>
+                            <input type="text" id="program-name" class="schema-input" placeholder="name">
+                        </div>
+                        <div class="form-group">
+                            <label for="program-description">Description Field:</label>
+                            <input type="text" id="program-description" class="schema-input" placeholder="description">
+                        </div>
+                        <div class="form-group">
+                            <label for="program-link">Link Field:</label>
+                            <input type="text" id="program-link" class="schema-input" placeholder="link">
+                        </div>
+                        <div class="form-group">
+                            <label for="program-extra">Extra Label Field:</label>
+                            <input type="text" id="program-extra" class="schema-input" placeholder="degree">
+                        </div>
+                        <div class="form-group">
+                            <label for="program-category">Category Field:</label>
+                            <input type="text" id="program-category" class="schema-input" placeholder="eab_cip_code">
+                        </div>
+                    </div>
+                    
+                    <div class="schema-section">
+                        <h3>Clubs</h3>
+                        <div class="form-group">
+                            <label for="club-name">Name Field:</label>
+                            <input type="text" id="club-name" class="schema-input" placeholder="name">
+                        </div>
+                        <div class="form-group">
+                            <label for="club-description">Description Field:</label>
+                            <input type="text" id="club-description" class="schema-input" placeholder="description">
+                        </div>
+                        <div class="form-group">
+                            <label for="club-link">Link Field:</label>
+                            <input type="text" id="club-link" class="schema-input" placeholder="website">
+                        </div>
+                        <div class="form-group">
+                            <label for="club-extra">Extra Label Field:</label>
+                            <input type="text" id="club-extra" class="schema-input" placeholder="">
+                        </div>
+                        <div class="form-group">
+                            <label for="club-category">Category Field:</label>
+                            <input type="text" id="club-category" class="schema-input" placeholder="eab_cip_code">
+                        </div>
+                    </div>
+                    
+                    <button id="save-schema" class="action-button">Save Configuration</button>
+                </div>
+            </div>
+
+            <!-- Main content sections - side-by-side layout -->
+            <div class="content-sections">
+                <div class="columns-container">
+                    <!-- Programs section -->
+                    <div class="column">
+                        <h2 class="section-header">Programs</h2>
+                        <div id="programs-container" class="cards-container"></div>
+                    </div>
+
+                    <!-- Clubs section -->
+                    <div class="column">
+                        <h2 class="section-header">Clubs</h2>
+                        <div id="clubs-container" class="cards-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>

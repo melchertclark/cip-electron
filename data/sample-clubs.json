@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Computer Science Club",
+    "description": "A community for students interested in computer science to collaborate on projects, share knowledge, and participate in hackathons and coding challenges.",
+    "website": "https://www.du.edu/csclub",
+    "eab_cip_code": "Computer and Information Sciences and Support Services"
+  },
+  {
+    "name": "Programming Team",
+    "description": "Competitive programming team that participates in regional and national coding competitions and algorithm challenges.",
+    "website": "https://www.du.edu/programming-team",
+    "eab_cip_code": "Computer and Information Sciences and Support Services"
+  },
+  {
+    "name": "Biology Society",
+    "description": "Organization dedicated to connecting biology students, hosting guest lectures, organizing field trips, and participating in community service.",
+    "website": "https://www.du.edu/biosociety",
+    "eab_cip_code": "Biological and Biomedical Sciences"
+  },
+  {
+    "name": "Marketing Association",
+    "description": "Professional organization for marketing students, offering networking events, guest speakers, and real-world marketing project opportunities.",
+    "website": "https://www.du.edu/marketing-association",
+    "eab_cip_code": "Business, Management, Marketing, and Related Support Services"
+  },
+  {
+    "name": "Business Leaders Club",
+    "description": "Club focused on developing leadership skills in business contexts through workshops, competitions, and mentorship opportunities.",
+    "website": "https://www.du.edu/business-leaders",
+    "eab_cip_code": "Business, Management, Marketing, and Related Support Services"
+  },
+  {
+    "name": "Psychology Club",
+    "description": "A group for psychology students to engage in discussions, attend workshops, and learn about research and career opportunities in psychology.",
+    "website": "https://www.du.edu/psychclub",
+    "eab_cip_code": "Psychology"
+  }
+]

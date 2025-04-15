@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Computer Science",
+    "description": "Learn to design and build software and systems that solve real-world problems. Curriculum includes programming languages, algorithms, data structures, and software engineering principles.",
+    "degree": "BS",
+    "link": "https://www.du.edu/cs",
+    "eab_cip_code": "Computer and Information Sciences and Support Services"
+  },
+  {
+    "name": "Data Science",
+    "description": "Focuses on extracting insights from data using statistical methods, machine learning, and programming.",
+    "degree": "MS",
+    "link": "https://www.du.edu/datascience",
+    "eab_cip_code": "Computer and Information Sciences and Support Services"
+  },
+  {
+    "name": "Biology",
+    "description": "Study of living organisms and their interactions with each other and the environment.",
+    "degree": "BS",
+    "link": "https://www.du.edu/biology",
+    "eab_cip_code": "Biological and Biomedical Sciences"
+  },
+  {
+    "name": "Marketing",
+    "description": "Learn to identify customer needs and develop strategies to meet them through product development, pricing, promotion, and distribution.",
+    "degree": "BBA",
+    "link": "https://www.du.edu/marketing",
+    "eab_cip_code": "Business, Management, Marketing, and Related Support Services"
+  },
+  {
+    "name": "Psychology",
+    "description": "The scientific study of behavior and mental processes, covering topics from neural mechanisms to social interactions.",
+    "degree": "BA",
+    "link": "https://www.du.edu/psychology",
+    "eab_cip_code": "Psychology"
+  }
+]
