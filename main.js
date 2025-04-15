@@ -394,20 +394,19 @@ ipcMain.handle('save-file', async (event, data) => {
         if (!data.programs || !data.clubs) {
             return { success: false, message: 'Invalid data structure' };
         }
-        const { filePath } = await dialog.showSaveDialog({
-            title: 'Save CIP File',
-            defaultPath: path.join(app.getPath('documents'), 'cip-data.json'),
-            filters: [{ name: 'JSON Files', extensions: ['json'] }]
-        });
-        if (!filePath) {
-            return { success: false, message: 'Save cancelled' };
-        }
-        const jsonData = JSON.stringify(data, null, 2);
-        await fs.promises.writeFile(filePath, jsonData);
-        event.sender.send('save-complete', { success: true });
-        return { success: true };
+        // Write to Downloads folder with timestamped filenames
+        const downloadsPath = app.getPath('downloads');
+        const now = new Date();
+        const pad = (n) => n.toString().padStart(2, '0');
+        const timestamp = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+        const programsPath = path.join(downloadsPath, `DUprograms_${timestamp}.json`);
+        const clubsPath = path.join(downloadsPath, `categorized_clubs_${timestamp}.json`);
+        await fs.promises.writeFile(programsPath, JSON.stringify(data.programs, null, 2));
+        await fs.promises.writeFile(clubsPath, JSON.stringify(data.clubs, null, 2));
+        event.sender.send('save-complete', { success: true, programsPath, clubsPath });
+        return { success: true, programsPath, clubsPath };
     } catch (error) {
-        console.error('Error saving file:', error);
+        console.error('Error saving files:', error);
         event.sender.send('error', { message: error.message });
         return { success: false, message: error.message };
     }
