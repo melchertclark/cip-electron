@@ -439,3 +439,110 @@ body {
 .cancel-button:hover {
     background-color: #c0392b;
 }
+
+#save-button {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    padding: 8px 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    z-index: 1000;
+    transition: background-color 0.3s;
+}
+
+#save-button:hover {
+    background-color: #45a049;
+}
+
+.edit-input {
+    width: 100%;
+    padding: 4px 8px;
+    border: 1px solid #3498db;
+    border-radius: 4px;
+    font-size: inherit;
+    font-family: inherit;
+    background-color: white;
+    margin: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    display: block; /* Ensure it takes full width */
+}
+
+textarea.edit-input {
+    resize: vertical;
+    min-height: 60px; /* Start with a reasonable min height */
+    line-height: inherit;
+    white-space: pre-wrap;
+    overflow-y: auto;
+}
+
+.edit-controls {
+    margin-top: 5px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 5px;
+}
+
+.edit-controls button {
+    padding: 3px 8px;
+    font-size: 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    border: none;
+}
+
+.edit-accept {
+    background-color: #2ecc71;
+    color: white;
+}
+
+.edit-accept:hover {
+    background-color: #27ae60;
+}
+
+.edit-cancel {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.edit-cancel:hover {
+    background-color: #c0392b;
+}
+
+.edit-input:focus {
+    outline: none;
+    border-color: #2980b9;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+/* Ensure the edit input in the description maintains proper size */
+.card-description .edit-input {
+    white-space: pre-wrap;
+    line-height: 1.5;
+    color: #333;
+}
+
+/* Make sure the edit input in the title maintains proper alignment */
+.card-title .edit-input {
+    font-weight: bold;
+    color: #3498db;
+}
+
+/* Ensure the edit input in the subtitle maintains proper style */
+.card-subtitle .edit-input {
+    font-size: 0.9em;
+    color: #7f8c8d;
+}
+
+/* Make sure the edit input in the link button maintains proper style */
+.card-link-button .edit-input {
+    padding: 2px 4px;
+    width: auto;
+    min-width: 200px;
+    color: #3498db;
+}

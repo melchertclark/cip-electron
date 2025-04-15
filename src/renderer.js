@@ -74,6 +74,9 @@ const clubLinkField = document.getElementById('club-link');
 const clubExtraField = document.getElementById('club-extra');
 const clubCategoryField = document.getElementById('club-category');
 
+// Global variable for the save button (declared here, added to DOM later)
+let saveButton = null;
+
 // Application state
 let appState = {
     programs: [],
@@ -100,10 +103,57 @@ let appState = {
     instaUrl: 'https://www.instagram.com/uofdenver/'
 };
 
-// Initialize application
-init();
+// Track unsaved changes - MOVED HERE
+let hasUnsavedChanges = false;
+
+// Initialize application only after DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 
 async function init() {
+    // Add save button to the DOM now that it's ready
+    const headerContainer = document.querySelector('.toolbar');
+    if (headerContainer) {
+        saveButton = document.createElement('button');
+        saveButton.id = 'save-button';
+        saveButton.textContent = 'Save Changes';
+        saveButton.style.display = 'none'; // Initially hidden
+        headerContainer.insertBefore(saveButton, headerContainer.firstChild);
+        
+        // Add save button functionality
+        saveButton.addEventListener('click', async () => {
+            try {
+                // Make sure appState.programs and appState.clubs are defined
+                if (!appState.programs) appState.programs = [];
+                if (!appState.clubs) appState.clubs = [];
+                
+                const data = {
+                    programs: appState.programs,
+                    clubs: appState.clubs
+                };
+                
+                console.log('Saving data:', data); // Debug log
+                
+                const result = await window.api.saveToFile(data);
+                
+                if (result.success) {
+                    hasUnsavedChanges = false;
+                    hideSaveButton();
+                    window.api.markChangesSaved();
+                } else {
+                    console.error('Save failed:', result.message);
+                }
+            } catch (error) {
+                console.error('Error saving data:', error);
+            }
+        });
+    } else {
+        console.error("Header container not found! Cannot add save button.");
+    }
+
     // Load schema config
     await loadSchemaConfig();
 
@@ -414,7 +464,9 @@ function displayCategory(category) {
                 program[appState.schema.programs.name] || 'N/A',
                 program[appState.schema.programs.description] || 'No description available',
                 program[appState.schema.programs.link] || '',
-                program[appState.schema.programs.extraLabel] || ''
+                program[appState.schema.programs.extraLabel] || '',
+                'programs',
+                appState.programs.indexOf(program)
             );
             programsContainer.appendChild(card);
         });
@@ -439,15 +491,154 @@ function displayCategory(category) {
                 club[appState.schema.clubs.name] || 'N/A',
                 club[appState.schema.clubs.description] || 'No description available',
                 club[appState.schema.clubs.link] || '',
-                club[appState.schema.clubs.extraLabel] || ''
+                club[appState.schema.clubs.extraLabel] || '',
+                'clubs',
+                appState.clubs.indexOf(club)
             );
             clubsContainer.appendChild(card);
         });
     }
 }
 
-// Create a card element
-function createCard(title, description, link, extraLabel) {
+// Function to make a field editable
+function makeFieldEditable(element, type, index, field) {
+    // Prevent starting a new edit if one is already active in this element
+    if (element.querySelector('.edit-input')) {
+        return;
+    }
+
+    const originalContent = element.textContent;
+    const originalHTML = element.innerHTML; // Store original HTML for descriptions
+    
+    // Use textarea for description fields and input for others
+    const isDescription = element.classList.contains('card-description');
+    const input = document.createElement(isDescription ? 'textarea' : 'input');
+    input.type = 'text';
+    input.value = originalContent;
+    input.className = 'edit-input';
+    
+    // Set specific styles for textarea
+    if (isDescription) {
+        const computedStyle = window.getComputedStyle(element);
+        input.style.minHeight = computedStyle.height;
+        input.style.width = '100%'; // Ensure it takes full width
+        input.style.lineHeight = computedStyle.lineHeight;
+        input.style.fontFamily = computedStyle.fontFamily;
+        input.style.fontSize = computedStyle.fontSize;
+        
+        // Auto-adjust height as user types
+        input.addEventListener('input', () => {
+            input.style.height = 'auto';
+            input.style.height = input.scrollHeight + 'px';
+        });
+    }
+    
+    // Create controls container
+    const controls = document.createElement('div');
+    controls.className = 'edit-controls';
+
+    const acceptButton = document.createElement('button');
+    acceptButton.textContent = 'Accept';
+    acceptButton.className = 'edit-accept';
+
+    const cancelButton = document.createElement('button');
+    cancelButton.textContent = 'Cancel';
+    cancelButton.className = 'edit-cancel';
+
+    controls.appendChild(acceptButton);
+    controls.appendChild(cancelButton);
+
+    // Clear element and add input and controls
+    element.innerHTML = ''; // Use innerHTML to clear completely
+    element.appendChild(input);
+    element.appendChild(controls);
+    input.focus();
+    
+    // Trigger auto-height adjustment for textarea
+    if (isDescription) {
+        input.dispatchEvent(new Event('input'));
+    }
+
+    // --- Cleanup function --- 
+    const cleanup = () => {
+        if (element.contains(input)) element.removeChild(input);
+        if (element.contains(controls)) element.removeChild(controls);
+        // Restore original content based on type
+        if (isDescription) {
+            element.innerHTML = originalHTML;
+        } else {
+            element.textContent = originalContent;
+        }
+    };
+
+    // --- Save function --- 
+    const save = () => {
+        const newValue = input.value.trim();
+        let changed = false;
+        if (newValue !== originalContent) {
+            if (type === 'programs') {
+                appState.programs[index][field] = newValue;
+            } else {
+                appState.clubs[index][field] = newValue;
+            }
+            hasUnsavedChanges = true;
+            showSaveButton();
+            window.api.markUnsavedChanges(); // Mark changes in main process
+            changed = true;
+        }
+        
+        // Remove input and controls
+        if (element.contains(input)) {
+            element.removeChild(input);
+        }
+        if (element.contains(controls)) {
+            element.removeChild(controls);
+        }
+        
+        // Update display with new value (preserving line breaks for descriptions)
+        if (isDescription) {
+            element.innerHTML = newValue.replace(/\n/g, '<br>');
+        } else {
+            element.textContent = newValue;
+        }
+        return changed;
+    };
+
+    // --- Event Listeners --- 
+    acceptButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        save();
+    });
+
+    cancelButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        cleanup();
+    });
+
+    input.addEventListener('keydown', (e) => {
+        e.stopPropagation(); // Prevent card toggling etc.
+        if (e.key === 'Escape') {
+            cleanup();
+        } else if (e.key === 'Enter') {
+            if (!isDescription) {
+                // Accept on Enter for single-line inputs
+                e.preventDefault();
+                save();
+            } else if (e.metaKey || e.ctrlKey) {
+                // Accept on Cmd/Ctrl+Enter for textareas
+                e.preventDefault();
+                save();
+            }
+            // Allow normal Enter for newlines in textarea otherwise
+        }
+    });
+
+    // Prevent card click/toggle when interacting with controls
+    controls.addEventListener('click', e => e.stopPropagation());
+}
+
+// Function to create a card with editable fields
+function createCard(title, description, link, extraLabel, type, index) {
     const card = document.createElement('div');
     card.className = 'card';
     
@@ -466,17 +657,28 @@ function createCard(title, description, link, extraLabel) {
     const toggle = document.createElement('span');
     toggle.className = 'card-toggle';
     toggle.textContent = '›';
-    // We no longer need a click handler here as the whole header is clickable
     
     // Title with link functionality
     const titleElem = document.createElement('span');
     titleElem.className = 'card-title';
     titleElem.textContent = title;
+    titleElem.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        makeFieldEditable(titleElem, type, index, appState.schema[type].name);
+    });
     
     // Subtitle (extra label)
     const subtitle = document.createElement('span');
     subtitle.className = 'card-subtitle';
     subtitle.textContent = extraLabel ? `(${extraLabel})` : '';
+    if (extraLabel) {
+        subtitle.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            makeFieldEditable(subtitle, type, index, appState.schema[type].extraLabel);
+        });
+    }
     
     // Assemble header
     header.appendChild(toggle);
@@ -494,6 +696,11 @@ function createCard(title, description, link, extraLabel) {
             e.preventDefault(); // Prevent any default action
             openLink(link);
             return false; // Ensure no navigation happens
+        });
+        linkButton.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            makeFieldEditable(linkButton, type, index, appState.schema[type].link);
         });
         header.appendChild(linkButton);
     }
@@ -514,6 +721,11 @@ function createCard(title, description, link, extraLabel) {
         .replace(/'/g, '&#039;');
     
     descElem.innerHTML = escapedDesc;
+    descElem.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        makeFieldEditable(descElem, type, index, appState.schema[type].description);
+    });
     
     body.appendChild(descElem);
     
@@ -667,11 +879,11 @@ function setupEventListeners() {
         return false;
     });
     
-    instaButton.addEventListener('contextmenu', (e) => {
+    instaButton.addEventListener('contextmenu', (e => {
         e.preventDefault();
         showUrlEditModal('insta');
         return false;
-    });
+    }));
     
     // Search input handler
     searchInput.addEventListener('input', (e) => filterCIPList(e.target.value));
@@ -703,4 +915,68 @@ function setupEventListeners() {
         updateSchemaInputFields();
         schemaModal.style.display = 'block';
     });
+
+    // Add event listener for save complete
+    window.api.onSaveComplete((result) => {
+        if (result.success) {
+            hasUnsavedChanges = false;
+            hideSaveButton();
+        }
+    });
+
+    // Add event listener for errors
+    window.api.onError((error) => {
+        console.error('Error:', error.message);
+    });
+
+    // Add event listener for save-before-close
+    window.api.onSaveBeforeClose(async () => {
+        try {
+            // Make sure appState.programs and appState.clubs are defined
+            if (!appState.programs) appState.programs = [];
+            if (!appState.clubs) appState.clubs = [];
+            
+            const data = {
+                programs: appState.programs,
+                clubs: appState.clubs
+            };
+            
+            // Save the data
+            const result = await window.api.saveToFile(data);
+            
+            // Notify the main process of the result
+            window.api.saveBeforeCloseComplete(result.success);
+            
+            if (result.success) {
+                hasUnsavedChanges = false;
+                hideSaveButton();
+            }
+        } catch (error) {
+            console.error('Error saving data before close:', error);
+            window.api.saveBeforeCloseComplete(false);
+        }
+    });
+}
+
+// Add beforeunload event listener
+window.addEventListener('beforeunload', (e) => {
+    if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+
+// Function to show the save button
+function showSaveButton() {
+    if (saveButton) {
+        saveButton.style.display = 'block';
+        saveButton.style.visibility = 'visible';
+    }
+}
+
+// Function to hide the save button
+function hideSaveButton() {
+    if (saveButton) {
+        saveButton.style.display = 'none';
+    }
 }

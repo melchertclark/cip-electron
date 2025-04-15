@@ -10,6 +10,7 @@ const store = new ElectronStore();
 
 // Keep a global reference of the window object
 let mainWindow;
+let hasUnsavedChanges = false;
 
 function createWindow() {
   // Create the browser window
@@ -45,6 +46,50 @@ function createWindow() {
     }
     // Prevent window creation
     return { action: 'deny' };
+  });
+
+  // Handle window close
+  mainWindow.on('close', async (event) => {
+    if (hasUnsavedChanges) {
+      event.preventDefault();
+      const { response } = await dialog.showMessageBox(mainWindow, {
+        type: 'question',
+        buttons: ['Save', 'Don\'t Save', 'Cancel'],
+        defaultId: 0,
+        title: 'Unsaved Changes',
+        message: 'You have unsaved changes. Would you like to save them before closing?',
+        cancelId: 2
+      });
+
+      if (response === 0) { // Save
+        try {
+          // Instead of trying to access appState directly, send a message to the renderer
+          // to save the data and wait for the response
+          mainWindow.webContents.send('save-before-close');
+          
+          // Wait for the save to complete
+          const saveResult = await new Promise((resolve) => {
+            ipcMain.once('save-before-close-complete', (_, result) => {
+              resolve(result);
+            });
+            
+            // Set a timeout in case the save takes too long
+            setTimeout(() => resolve(false), 5000);
+          });
+          
+          if (!saveResult) {
+            // If save was cancelled or failed, prevent closing
+            return;
+          }
+        } catch (error) {
+          console.error('Error saving data:', error);
+          return;
+        }
+      } else if (response === 2) { // Cancel
+        return;
+      }
+      // If "Don't Save" was chosen, continue with closing
+    }
   });
 
   // Emitted when the window is closed
@@ -97,8 +142,11 @@ function createWindow() {
         { 
           type: 'separator' 
         },
-        { 
-          role: 'quit' 
+        {
+          label: 'Save Changes',
+          click: () => {
+            mainWindow.webContents.send('save-changes');
+          }
         }
       ]
     },
@@ -288,4 +336,79 @@ ipcMain.handle('load-custom-urls', () => {
   };
   
   return store.get('customUrls', defaultUrls);
+});
+
+// Handle saving data
+ipcMain.handle('save-data', async (event, type, data) => {
+  try {
+    // Validate data
+    if (!data) {
+      console.error('No data provided to save-data handler');
+      return false;
+    }
+    
+    const defaultPath = path.join(__dirname, 'data', `${type}.json`);
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      defaultPath,
+      filters: [{ name: 'JSON', extensions: ['json'] }]
+    });
+
+    if (!canceled && filePath) {
+      // Convert data to JSON string
+      const jsonData = JSON.stringify(data, null, 2);
+      
+      // Write to file
+      await fs.promises.writeFile(filePath, jsonData);
+      hasUnsavedChanges = false;
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Error saving data:', error);
+    return false;
+  }
+});
+
+// Handle before-unload check
+ipcMain.on('check-unsaved-changes', (event) => {
+  event.returnValue = hasUnsavedChanges;
+});
+
+// Handle marking changes as unsaved
+ipcMain.on('mark-unsaved-changes', () => {
+  hasUnsavedChanges = true;
+});
+
+// Handle marking changes as saved
+ipcMain.on('mark-changes-saved', () => {
+  hasUnsavedChanges = false;
+});
+
+// New IPC handler for saving file
+ipcMain.handle('save-file', async (event, data) => {
+    try {
+        // Validate data
+        if (!data) {
+            return { success: false, message: 'No data provided' };
+        }
+        if (!data.programs || !data.clubs) {
+            return { success: false, message: 'Invalid data structure' };
+        }
+        const { filePath } = await dialog.showSaveDialog({
+            title: 'Save CIP File',
+            defaultPath: path.join(app.getPath('documents'), 'cip-data.json'),
+            filters: [{ name: 'JSON Files', extensions: ['json'] }]
+        });
+        if (!filePath) {
+            return { success: false, message: 'Save cancelled' };
+        }
+        const jsonData = JSON.stringify(data, null, 2);
+        await fs.promises.writeFile(filePath, jsonData);
+        event.sender.send('save-complete', { success: true });
+        return { success: true };
+    } catch (error) {
+        console.error('Error saving file:', error);
+        event.sender.send('error', { message: error.message });
+        return { success: false, message: error.message };
+    }
 });
